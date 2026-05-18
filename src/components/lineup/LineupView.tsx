@@ -183,7 +183,7 @@ function LineupViewInner({ phase, lineup }: Props) {
   }
 
   return (
-    <div className="sticky top-14 z-30 flex h-[calc(100vh-3.5rem)] min-w-0 flex-col gap-4 md:h-[calc(100vh-5rem)] md:gap-5">
+    <div className="sticky top-14 z-30 flex h-[calc(100svh-3.5rem)] min-w-0 flex-col gap-4 md:h-[calc(100svh-5rem)] md:gap-5">
       <section className="min-w-0 shrink-0 overflow-hidden rounded-3xl bg-cream shadow-card">
         <LineupControlBar
           search={search}
@@ -204,7 +204,7 @@ function LineupViewInner({ phase, lineup }: Props) {
       </section>
 
       <section className="-mx-4 flex min-h-0 min-w-0 flex-1 overflow-hidden rounded-t-3xl bg-cream shadow-card md:mx-0 md:rounded-3xl">
-        <div className="scrollbar-hide h-full w-full overflow-y-auto px-2 py-4 md:px-6 md:py-8">
+        <div className="scrollbar-hide h-full w-full overflow-y-auto py-4 md:px-6 md:py-8">
           {isOMSOnly && !mapView && (
             <button
               type="button"
