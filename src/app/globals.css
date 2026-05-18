@@ -1,26 +1,151 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700;800&display=swap");
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@font-face {
+  font-family: "Hello Notie";
+  src: url("/fonts/Hello-Notie.woff2") format("woff2");
+  font-display: swap;
+  font-weight: normal;
+  font-style: normal;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+@theme {
+  /* Primitive palette */
+  --color-cream: #eceff8;
+  --color-cream-50: #eceff8;
+  --color-cream-100: #eceff8;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-ink: #1a1a1a;
+  --color-ink-700: #4a4a4a;
+  --color-ink-500: #757575;
+  --color-ink-300: #c4c4c4;
+  --color-ink-100: #e8e8e8;
+
+  --color-market-50: #edf1e3;
+  --color-market-100: #eff5e6;
+  --color-market-500: #5eaa5e;
+  --color-market-700: #2f6b2f;
+  --color-market-900: #1a3d1a;
+
+  --color-sussex-50: #e0eeff;
+  --color-sussex-100: #e0eeff;
+  --color-sussex-500: #1a7df2;
+  --color-sussex-700: #155da8;
+  --color-sussex-900: #0a2e4d;
+
+  --color-library-50: #f2dbe3;
+  --color-library-100: #f8ecf8;
+  --color-library-500: #bf47a0;
+  --color-library-700: #8f2f72;
+  --color-library-900: #4d143a;
+
+  /* Semantic site shortcuts (components should use these, not the primitives) */
+  --color-site-market: var(--color-market-500);
+  --color-site-market-tint: var(--color-market-50);
+  --color-site-market-soft: var(--color-market-100);
+  --color-site-market-deep: var(--color-market-700);
+
+  --color-site-sussex: var(--color-sussex-500);
+  --color-site-sussex-tint: var(--color-sussex-50);
+  --color-site-sussex-soft: var(--color-sussex-100);
+  --color-site-sussex-deep: var(--color-sussex-700);
+
+  --color-site-library: var(--color-library-500);
+  --color-site-library-tint: var(--color-library-50);
+  --color-site-library-soft: var(--color-library-100);
+  --color-site-library-deep: var(--color-library-700);
+
+  /* Status (functional, single-purpose) */
+  --color-status-live: #b42318;
+  --color-status-live-bg: #fef3f2;
+  --color-status-next: #b54708;
+  --color-status-next-bg: #fef6ee;
+  --color-status-past: #595959;
+
+  /* Elevation */
+  --shadow-card: 0 1px 3px rgba(26, 26, 26, 0.04), 0 4px 16px rgba(26, 26, 26, 0.05);
+
+  /* Fonts */
+  --font-sans: "Inter Tight", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  --font-hellonotie: "Hello Notie", "Inter Tight", cursive;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-cream);
+  color: var(--color-ink);
+  font-family: "Inter Tight", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+}
+
+/* Custom scrollbars: 5px rounded dark-green thumb, no track, no buttons */
+*::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+  background: transparent;
+}
+*::-webkit-scrollbar-track,
+*::-webkit-scrollbar-track-piece {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+*::-webkit-scrollbar-thumb {
+  background-color: var(--color-market-900);
+  border-radius: 9999px;
+  border: none;
+}
+*::-webkit-scrollbar-button,
+*::-webkit-scrollbar-button:single-button,
+*::-webkit-scrollbar-button:start,
+*::-webkit-scrollbar-button:end,
+*::-webkit-scrollbar-button:vertical:start:decrement,
+*::-webkit-scrollbar-button:vertical:end:increment,
+*::-webkit-scrollbar-button:horizontal:start:decrement,
+*::-webkit-scrollbar-button:horizontal:end:increment {
+  display: none;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 0;
+  width: 0;
+}
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+html {
+  scrollbar-color: var(--color-market-900) transparent;
+  scrollbar-width: thin;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.pulse-dot {
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
