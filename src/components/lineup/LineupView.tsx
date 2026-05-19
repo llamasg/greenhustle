@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import {
   type Category,
@@ -20,15 +20,127 @@ import { LineupControlBar } from "./LineupControlBar";
 import { LineupFeed, type EmptyState } from "./LineupFeed";
 import { OnNowBanner } from "./OnNowBanner";
 import { SavedProvider, useSaved } from "./SavedContext";
+import { OpenCardProvider, useOpenCard } from "./OpenCardContext";
+import type { FeaturedSearch } from "./ContainerCard";
+import {
+  OMSMainStageCard,
+  OMS_MAIN_STAGE_ID,
+  OMS_MAIN_STAGE_SEARCH,
+  OMS_MAIN_STAGE_SITE,
+} from "./featured/OMSMainStageCard";
+import {
+  GrowYourselfHubCard,
+  GROW_YOURSELF_HUB_ID,
+  GROW_YOURSELF_HUB_SEARCH,
+  GROW_YOURSELF_HUB_SITE,
+} from "./featured/GrowYourselfHubCard";
+import {
+  SussexStageCard,
+  SUSSEX_STAGE_ID,
+  SUSSEX_STAGE_SEARCH,
+  SUSSEX_STAGE_SITE,
+} from "./featured/SussexStageCard";
+import {
+  MeanderersWalksCard,
+  MEANDERERS_WALKS_ID,
+  MEANDERERS_WALKS_SEARCH,
+  MEANDERERS_WALKS_SITE,
+} from "./featured/MeanderersWalksCard";
+import {
+  WildNGWalksCard,
+  WILD_NG_WALKS_ID,
+  WILD_NG_WALKS_SEARCH,
+  WILD_NG_WALKS_SITE,
+} from "./featured/WildNGWalksCard";
 import type { NavTarget } from "./types";
+
+type FeaturedCard = {
+  id: string;
+  site: SiteKey;
+  search: FeaturedSearch;
+  render: (
+    nowMinutes: number | null,
+    target: NavTarget | null
+  ) => React.ReactElement;
+};
+
+// Manifest of bespoke programmes pinned above the spreadsheet-driven feed.
+// Order here drives display order when no site filter is applied (market →
+// sussex → library, then walks within library).
+const FEATURED_CARDS: FeaturedCard[] = [
+  {
+    id: OMS_MAIN_STAGE_ID,
+    site: OMS_MAIN_STAGE_SITE,
+    search: OMS_MAIN_STAGE_SEARCH,
+    render: (nowMinutes, target) => (
+      <OMSMainStageCard nowMinutes={nowMinutes} target={target} />
+    ),
+  },
+  {
+    id: GROW_YOURSELF_HUB_ID,
+    site: GROW_YOURSELF_HUB_SITE,
+    search: GROW_YOURSELF_HUB_SEARCH,
+    render: (nowMinutes, target) => (
+      <GrowYourselfHubCard nowMinutes={nowMinutes} target={target} />
+    ),
+  },
+  {
+    id: SUSSEX_STAGE_ID,
+    site: SUSSEX_STAGE_SITE,
+    search: SUSSEX_STAGE_SEARCH,
+    render: (nowMinutes, target) => (
+      <SussexStageCard nowMinutes={nowMinutes} target={target} />
+    ),
+  },
+  {
+    id: MEANDERERS_WALKS_ID,
+    site: MEANDERERS_WALKS_SITE,
+    search: MEANDERERS_WALKS_SEARCH,
+    render: (nowMinutes, target) => (
+      <MeanderersWalksCard nowMinutes={nowMinutes} target={target} />
+    ),
+  },
+  {
+    id: WILD_NG_WALKS_ID,
+    site: WILD_NG_WALKS_SITE,
+    search: WILD_NG_WALKS_SEARCH,
+    render: (nowMinutes, target) => (
+      <WildNGWalksCard nowMinutes={nowMinutes} target={target} />
+    ),
+  },
+];
+
+// Subtle section divider used between the pinned "Curated Programmes"
+// and the rest of the "Stalls & Activities" feed: small uppercase label
+// with a thin rule extending to the right.
+function SectionHeader({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="mb-3 flex items-center gap-3 md:mb-4">
+      <h2 className="shrink-0 text-xs font-semibold uppercase tracking-widest text-ink-500">
+        {children}
+      </h2>
+      <div aria-hidden="true" className="h-px flex-1 bg-ink-300/60" />
+    </div>
+  );
+}
+
+function featuredHaystack(search: FeaturedSearch): string {
+  const parts: string[] = [
+    search.title,
+    search.shortDescription ?? "",
+    search.longDescription ?? "",
+  ];
+  for (const s of search.subItems) {
+    parts.push(s.title);
+    if (s.summary) parts.push(s.summary);
+  }
+  return parts.join(" ").toLowerCase();
+}
 
 type Props = {
   phase: FestivalPhase;
   lineup: LineupItem[];
 };
-
-const focusRing =
-  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black";
 
 function parseSite(value: string | null): SiteKey | null {
   if (value === "market" || value === "sussex" || value === "library")
@@ -63,7 +175,9 @@ function getNowMinutesUK(d: Date): number {
 export function LineupView({ phase, lineup }: Props) {
   return (
     <SavedProvider>
-      <LineupViewInner phase={phase} lineup={lineup} />
+      <OpenCardProvider>
+        <LineupViewInner phase={phase} lineup={lineup} />
+      </OpenCardProvider>
     </SavedProvider>
   );
 }
@@ -73,6 +187,7 @@ function LineupViewInner({ phase, lineup }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const { savedIds } = useSaved();
+  const { setOpenId } = useOpenCard();
 
   const urlSite = parseSite(params.get("site"));
   const urlCategory = parseCategory(params.get("category"));
@@ -80,7 +195,6 @@ function LineupViewInner({ phase, lineup }: Props) {
 
   const [search, setSearch] = useState("");
   const [target, setTarget] = useState<NavTarget | null>(null);
-  const [mapView, setMapView] = useState(false);
 
   const isFestivalDay = phase === "festival-day";
 
@@ -91,6 +205,28 @@ function LineupViewInner({ phase, lineup }: Props) {
   };
 
   const searchActive = isSearchActive(filters);
+
+  // Featured cards matched by the current search, in manifest order. Used
+  // both to render the pinned section during search and to drive the
+  // auto-open effect below.
+  const matchingFeatured = useMemo(() => {
+    if (!searchActive) return [];
+    const q = search.trim().toLowerCase();
+    return FEATURED_CARDS.filter((card) => {
+      if (urlSite && urlSite !== card.site) return false;
+      if (urlSavedActive && !savedIds.has(card.id)) return false;
+      return featuredHaystack(card.search).includes(q);
+    });
+  }, [searchActive, search, urlSite, urlSavedActive, savedIds]);
+
+  // Auto-open the first matching featured card during search so the user
+  // sees the matching sub-item without an extra click. Single-open
+  // accordion: if multiple match, only the first expands.
+  useEffect(() => {
+    if (!searchActive) return;
+    if (matchingFeatured.length === 0) return;
+    setOpenId(matchingFeatured[0].id);
+  }, [searchActive, matchingFeatured, setOpenId]);
 
   // Pre-filter by saved IDs when saved filter is active, so all
   // downstream filters/counts naturally compose with the saved scope.
@@ -144,17 +280,11 @@ function LineupViewInner({ phase, lineup }: Props) {
     writeParams(updated);
   };
 
-  const isOMSOnly =
-    urlSite === "market" ||
-    (sorted.length > 0 && sorted.every((i) => i.site === "market"));
-  const lastIsOMSOnly = useRef(isOMSOnly);
-  useEffect(() => {
-    if (lastIsOMSOnly.current && !isOMSOnly) setMapView(false);
-    lastIsOMSOnly.current = isOMSOnly;
-  }, [isOMSOnly]);
-
   const emptyState: EmptyState = (() => {
     if (sorted.length > 0) return { kind: "none" };
+    // Featured cards are their own "results" during search — suppress
+    // the no-results message if any matched.
+    if (searchActive && matchingFeatured.length > 0) return { kind: "none" };
     if (urlSavedActive && savedIds.size === 0) return { kind: "saved-empty" };
     if (searchActive) return { kind: "search", query: search };
     if (urlSite && urlCategory)
@@ -205,44 +335,53 @@ function LineupViewInner({ phase, lineup }: Props) {
 
       <section className="-mx-4 flex min-h-0 min-w-0 flex-1 overflow-hidden rounded-t-3xl bg-cream shadow-card md:mx-0 md:rounded-3xl">
         <div className="scrollbar-hide h-full w-full overflow-y-auto py-4 md:px-6 md:py-8">
-          {isOMSOnly && !mapView && (
-            <button
-              type="button"
-              onClick={() => setMapView(true)}
-              className={`mb-4 flex w-full min-h-11 items-center justify-center rounded-full border border-ink-300 bg-cream-50 px-4 py-2 text-sm font-medium text-ink hover:border-ink hover:bg-cream-100 min-[900px]:hidden ${focusRing}`}
-            >
-              View Old Market Square map
-            </button>
-          )}
-          {mapView ? (
-            <div className="flex flex-col gap-3 min-[900px]:hidden">
-              <button
-                type="button"
-                onClick={() => setMapView(false)}
-                className={`self-start min-h-11 rounded-full border border-ink-300 bg-cream-50 px-4 py-2 text-sm font-medium text-ink hover:border-ink hover:bg-cream-100 ${focusRing}`}
-              >
-                Back to list
-              </button>
-              <div
-                role="img"
-                aria-label="Sitemap of Old Market Square, illustrated, with tappable pitches"
-                className="flex aspect-[4/3] w-full items-center justify-center rounded-2xl border border-dashed border-ink-300 bg-cream-50 p-4 text-center text-sm text-ink-500"
-              >
-                [OMS sitemap, illustrated, tappable pitches]
-              </div>
-              <p className="text-xs text-ink-500">
-                Map view shows Old Market Square only on mobile. Sussex St and
-                Library use the list view.
-              </p>
-            </div>
-          ) : (
-            <LineupFeed
-              items={sorted}
-              emptyState={emptyState}
-              nowMinutes={nowMinutes}
-              target={target}
-            />
-          )}
+          {(() => {
+            // Pinned featured cards: bespoke programmes that aren't in the
+            // xlsx.
+            // - Search active: show only cards whose content (including
+            //   sub-item titles + summaries) matches the query.
+            // - Category filter active (no search): hide entirely, since
+            //   featured cards span multiple categories.
+            // - Otherwise: show all, scoped by site + saved filter.
+            const pinnedCards: FeaturedCard[] = (() => {
+              if (searchActive) return matchingFeatured;
+              if (urlCategory) return [];
+              return FEATURED_CARDS.filter((card) => {
+                if (urlSite && urlSite !== card.site) return false;
+                if (urlSavedActive && !savedIds.has(card.id)) return false;
+                return true;
+              });
+            })();
+            const hasStalls = sorted.length > 0;
+            return (
+              <>
+                {pinnedCards.length > 0 && (
+                  <section className="mb-8 px-2 md:mb-10 md:px-0">
+                    <SectionHeader>Curated Programmes</SectionHeader>
+                    <ul className="flex flex-col gap-4 md:gap-5">
+                      {pinnedCards.map((card) => (
+                        <li key={card.id}>
+                          {card.render(nowMinutes, target)}
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                )}
+
+                <section>
+                  {hasStalls && (
+                    <SectionHeader>Stalls &amp; Activities</SectionHeader>
+                  )}
+                  <LineupFeed
+                    items={sorted}
+                    emptyState={emptyState}
+                    nowMinutes={nowMinutes}
+                    target={target}
+                  />
+                </section>
+              </>
+            );
+          })()}
         </div>
       </section>
     </div>

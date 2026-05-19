@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useOpenCard } from "./OpenCardContext";
+import Image from "next/image";
 import Link from "next/link";
 import { Bookmark } from "lucide-react";
 import {
@@ -38,9 +40,10 @@ const CATEGORY_SHORT: Record<Category, string> = {
 };
 
 function topLabelFor(item: LineupItem): string {
-  if (isAllDay(item.time)) return "ALL DAY";
-  if (item.time) return item.time;
-  return "TBC";
+  // Treat blank time as "all day" rather than TBC — most stallholders
+  // without an explicit time are present for the whole festival.
+  if (!item.time || isAllDay(item.time)) return "ALL DAY";
+  return item.time;
 }
 
 function firstRangeStatus(
@@ -59,7 +62,8 @@ function toneFor(site: SiteKey | undefined): SiteKey {
 }
 
 export function StandaloneCard({ item, target, nowMinutes }: Props) {
-  const [open, setOpen] = useState(false);
+  const { isOpen, toggle: toggleOpen } = useOpenCard();
+  const open = isOpen(item.id);
   const [highlighted, setHighlighted] = useState(false);
   const cardRef = useRef<HTMLElement>(null);
   const { isSaved, toggle: toggleSaved } = useSaved();
@@ -106,7 +110,7 @@ export function StandaloneCard({ item, target, nowMinutes }: Props) {
       ref={cardRef}
       tone={toneFor(item.site)}
       expanded={open}
-      onToggle={() => setOpen((o) => !o)}
+      onToggle={() => toggleOpen(item.id)}
       className={cardClassName}
     >
       <LineupCard.Anchor
@@ -171,17 +175,17 @@ export function StandaloneCard({ item, target, nowMinutes }: Props) {
       {open && (
         <LineupCard.Body>
           <div className="flex flex-col gap-4">
-            <div
-              role="img"
-              aria-label={
-                item.photo
-                  ? `Photo of ${item.title}`
-                  : `Photo placeholder for ${item.title}`
-              }
-              className="flex aspect-[16/10] w-full items-center justify-center rounded-2xl border border-dashed border-ink-300 bg-cream-50 p-2 text-center text-xs text-ink-500"
-            >
-              {item.photo ? `[Photo of ${item.title}]` : "Photo to come"}
-            </div>
+            {item.photo && (
+              <div className="relative aspect-[16/10] w-full overflow-hidden rounded-2xl bg-cream-50">
+                <Image
+                  src={item.photo}
+                  alt={`Photo of ${item.title}`}
+                  fill
+                  sizes="(max-width: 768px) 100vw, 800px"
+                  className="object-cover"
+                />
+              </div>
+            )}
 
             <section>
               <h4 className="text-xs font-semibold uppercase tracking-widest text-ink-500">

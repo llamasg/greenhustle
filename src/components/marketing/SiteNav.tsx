@@ -1,53 +1,36 @@
-import Link from "next/link";
-import type { FestivalPhase } from "@/lib/festival/phase";
-import { SITE_NAV } from "@/lib/festival/content";
+import Image from "next/image";
 
-type Props = { phase: FestivalPhase };
+const MAIN_SITE_URL = "https://greenhustle.co.uk";
 
 const focusRing =
-  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black";
+  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-navy";
 
-export function SiteNav({ phase }: Props) {
+export function SiteNav() {
   return (
     <header
       data-section="site-nav"
-      className="sticky top-0 z-40 border-b border-black bg-white"
+      className="sticky top-0 z-40 border-b border-cream-100 bg-cream/95 backdrop-blur"
     >
       <nav
         aria-label="Primary"
-        className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3"
+        className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-2 md:px-6 md:py-3"
       >
-        <Link
-          href="/"
-          className={`text-base font-semibold ${focusRing}`}
+        <a
+          href={MAIN_SITE_URL}
+          className={`flex items-center gap-2 ${focusRing}`}
+          aria-label="Green Hustle, back to main site"
         >
-          {SITE_NAV.brand}
-        </Link>
-        <ul className="flex items-center gap-3 text-sm sm:gap-5">
-          {SITE_NAV.links.map((link) => {
-            const isLive = phase === "festival-day" && link.liveLabel;
-            return (
-              <li key={link.label} className="flex items-center">
-                <Link
-                  href={link.href}
-                  className={`flex items-center gap-1 border border-transparent px-1 py-1 hover:underline ${focusRing}`}
-                >
-                  {isLive ? (
-                    <>
-                      <span
-                        aria-hidden="true"
-                        className="inline-block h-2 w-2 rounded-full bg-black animate-pulse"
-                      />
-                      <span>{link.liveLabel}</span>
-                    </>
-                  ) : (
-                    <span>{link.label}</span>
-                  )}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+          <Image
+            src="/images/vectors/gh25-logo-03.svg"
+            alt=""
+            aria-hidden="true"
+            width={120}
+            height={82}
+            className="h-10 w-auto md:h-12"
+            priority
+          />
+          <span className="sr-only">Green Hustle</span>
+        </a>
       </nav>
     </header>
   );

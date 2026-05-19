@@ -51,28 +51,41 @@ export function CategoryChips({
     startX: number;
     startScrollLeft: number;
     moved: boolean;
+    captured: boolean;
   } | null>(null);
 
+  // Capture is deferred until the pointer has actually moved past the
+  // threshold. Capturing on pointerdown breaks button clicks in Chrome
+  // because the click then targets the capturing div, not the chip.
   const onPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     if (e.pointerType !== "mouse") return;
     if (!scrollRef.current) return;
-    e.currentTarget.setPointerCapture(e.pointerId);
     dragRef.current = {
       startX: e.clientX,
       startScrollLeft: scrollRef.current.scrollLeft,
       moved: false,
+      captured: false,
     };
   };
 
   const onPointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
     if (!dragRef.current || !scrollRef.current) return;
     const dx = e.clientX - dragRef.current.startX;
-    if (Math.abs(dx) > 4) dragRef.current.moved = true;
-    scrollRef.current.scrollLeft = dragRef.current.startScrollLeft - dx;
+    if (Math.abs(dx) > 4) {
+      if (!dragRef.current.captured) {
+        e.currentTarget.setPointerCapture(e.pointerId);
+        dragRef.current.captured = true;
+      }
+      dragRef.current.moved = true;
+      scrollRef.current.scrollLeft = dragRef.current.startScrollLeft - dx;
+    }
   };
 
   const onPointerEnd = (e: ReactPointerEvent<HTMLDivElement>) => {
-    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+    if (
+      dragRef.current?.captured &&
+      e.currentTarget.hasPointerCapture(e.pointerId)
+    ) {
       e.currentTarget.releasePointerCapture(e.pointerId);
     }
     // Defer clearing so onClickCapture can read `moved`

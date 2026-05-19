@@ -1,5 +1,5 @@
 import "server-only";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import * as XLSX from "xlsx";
 import {
@@ -9,6 +9,65 @@ import {
   type LineupItem,
   type SiteKey,
 } from "./lineup";
+
+const PHOTO_DIR = "images/lineupphotos";
+
+// Manual overrides for photos whose filenames don't auto-match an id
+// because of typos / extra prefixes / dropped hyphens in the source files.
+// Map: lineup item id → photo filename in /public/images/lineupphotos/
+const PHOTO_OVERRIDES: Record<string, string> = {
+  "angolan-womens-voice":
+    "angolan-women-voice-association-uk-cic-01.webp",
+  "dished": "Dished-Project-iStock-1451891653.x9d9d3524.webp",
+  "nottingham-climate-assembly": "nottingh-climate-assembly-05.webp",
+  "clean-champions":
+    "nottingham-city-council-nottingham-clean-champions-01.webp",
+  "green-guardians": "nottingham-green-guardians-04.webp",
+  "pythian-club": "pythianclub.webp",
+  "tiger-green-textiles": "tiger-community-enterprise-cic-01.webp",
+};
+
+function loadPhotoFiles(): string[] {
+  const dirPath = join(process.cwd(), "public", PHOTO_DIR);
+  try {
+    return readdirSync(dirPath).filter((f) => f.endsWith(".webp"));
+  } catch {
+    console.warn(`[lineup] photo dir missing at ${dirPath}, skipping photo wiring`);
+    return [];
+  }
+}
+
+function findPhoto(
+  id: string,
+  photoFiles: string[],
+  allIds: string[]
+): string | undefined {
+  // Explicit overrides win — for typos / extra prefixes the auto-match can't handle.
+  if (id in PHOTO_OVERRIDES) {
+    return `/${PHOTO_DIR}/${PHOTO_OVERRIDES[id]}`;
+  }
+  // Auto-match: photo filename starts with `${id}-` or equals id. Guard
+  // against shorter ids stealing files that belong to a longer id (e.g.
+  // id `nottingham` claiming `nottingham-climate-assembly-*.webp`).
+  for (const file of photoFiles) {
+    const base = file.replace(/\.webp$/, "");
+    const matches =
+      base === id || base.startsWith(`${id}-`) || base.startsWith(`${id}.`);
+    if (!matches) continue;
+    const longerIdAlsoMatches = allIds.some(
+      (otherId) =>
+        otherId !== id &&
+        otherId.length > id.length &&
+        (base === otherId ||
+          base.startsWith(`${otherId}-`) ||
+          base.startsWith(`${otherId}.`))
+    );
+    if (!longerIdAlsoMatches) {
+      return `/${PHOTO_DIR}/${file}`;
+    }
+  }
+  return undefined;
+}
 
 type RawRow = {
   id?: unknown;
@@ -104,6 +163,20 @@ function loadLineupFromXlsx(): LineupItem[] {
     const item = parseRow(row, i);
     if (item) items.push(item);
   });
+
+  // Second pass: attach photos from /public/images/lineupphotos/.
+  // Done after row parsing so findPhoto can disambiguate using the full id list.
+  const photoFiles = loadPhotoFiles();
+  if (photoFiles.length > 0) {
+    const allIds = items.map((i) => i.id);
+    for (const item of items) {
+      if (!item.photo) {
+        const resolved = findPhoto(item.id, photoFiles, allIds);
+        if (resolved) item.photo = resolved;
+      }
+    }
+  }
+
   return items;
 }
 
