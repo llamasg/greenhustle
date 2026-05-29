@@ -313,8 +313,11 @@ function LineupViewInner({ phase, lineup }: Props) {
   }
 
   return (
-    <div className="sticky top-14 z-30 flex h-[calc(100svh-3.5rem)] min-w-0 flex-col gap-4 md:h-[calc(100svh-5rem)] md:gap-5">
-      <section className="min-w-0 shrink-0 overflow-hidden rounded-3xl bg-cream shadow-card">
+    <div className="flex min-w-0 flex-col gap-4 md:gap-5">
+      {/* Control bar pins below the SiteNav so filters stay reachable
+          while the user scrolls the long feed. Includes OnNowBanner so
+          it sticks together on festival day. */}
+      <section className="sticky top-14 z-30 min-w-0 overflow-hidden rounded-3xl bg-cream shadow-card">
         <LineupControlBar
           search={search}
           onSearchChange={setSearch}
@@ -333,8 +336,8 @@ function LineupViewInner({ phase, lineup }: Props) {
         )}
       </section>
 
-      <section className="-mx-4 flex min-h-0 min-w-0 flex-1 overflow-hidden rounded-t-3xl bg-cream shadow-card md:mx-0 md:rounded-3xl">
-        <div className="scrollbar-hide h-full w-full overflow-y-auto py-4 md:px-6 md:py-8">
+      <section className="min-w-0 rounded-3xl bg-cream shadow-card">
+        <div className="px-3 py-4 md:px-6 md:py-8">
           {(() => {
             // Pinned featured cards: bespoke programmes that aren't in the
             // xlsx.

@@ -80,6 +80,7 @@ type RawRow = {
   photo?: unknown;
   website?: unknown;
   instagram?: unknown;
+  display_category_label?: unknown;
 };
 
 function cleanString(v: unknown): string | undefined {
@@ -144,6 +145,7 @@ function parseRow(row: RawRow, index: number): LineupItem | null {
     photo: cleanString(row.photo),
     website: buildWebsiteUrl(cleanString(row.website)),
     instagram: buildInstagramUrl(cleanString(row.instagram)),
+    displayCategoryLabel: cleanString(row.display_category_label),
   };
 }
 

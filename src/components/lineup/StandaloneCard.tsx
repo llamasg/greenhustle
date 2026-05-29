@@ -115,7 +115,7 @@ export function StandaloneCard({ item, target, nowMinutes }: Props) {
     >
       <LineupCard.Anchor
         topLabel={topLabelFor(item)}
-        mainLabel={CATEGORY_SHORT[item.category]}
+        mainLabel={item.displayCategoryLabel ?? CATEGORY_SHORT[item.category]}
       />
       <LineupCard.Content
         title={item.title}

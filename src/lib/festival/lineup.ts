@@ -18,6 +18,12 @@ export type LineupItem = {
   photo?: string;
   website?: string;
   instagram?: string;
+  /**
+   * Optional per-item override for the anchor pill label. When set,
+   * displayed instead of the category-derived short label. Does not
+   * affect filtering — the item still lives under its real `category`.
+   */
+  displayCategoryLabel?: string;
 };
 
 // Sites that appear as filter tabs. `fringe` is NOT a tab — fringe events
