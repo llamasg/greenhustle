@@ -7,7 +7,7 @@ import {
   type LineupItem,
   type SiteKey,
 } from "@/lib/festival/lineup";
-import { type FestivalPhase, getNow } from "@/lib/festival/phase";
+import { getNow } from "@/lib/festival/phase";
 import {
   countByCategory,
   countBySite,
@@ -138,7 +138,6 @@ function featuredHaystack(search: FeaturedSearch): string {
 }
 
 type Props = {
-  phase: FestivalPhase;
   lineup: LineupItem[];
 };
 
@@ -172,17 +171,17 @@ function getNowMinutesUK(d: Date): number {
   return h * 60 + m;
 }
 
-export function LineupView({ phase, lineup }: Props) {
+export function LineupView({ lineup }: Props) {
   return (
     <SavedProvider>
       <OpenCardProvider>
-        <LineupViewInner phase={phase} lineup={lineup} />
+        <LineupViewInner lineup={lineup} />
       </OpenCardProvider>
     </SavedProvider>
   );
 }
 
-function LineupViewInner({ phase, lineup }: Props) {
+function LineupViewInner({ lineup }: Props) {
   const params = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -196,7 +195,20 @@ function LineupViewInner({ phase, lineup }: Props) {
   const [search, setSearch] = useState("");
   const [target, setTarget] = useState<NavTarget | null>(null);
 
-  const isFestivalDay = phase === "festival-day";
+  // The page is statically prerendered, so `nowMinutes` is computed on
+  // the client and re-ticks every 30s to keep "live now" indicators
+  // honest as the day progresses. Starts null on the server to avoid
+  // hydration mismatch — the client populates immediately on mount.
+  const [nowMinutes, setNowMinutes] = useState<number | null>(null);
+
+  useEffect(() => {
+    function tick() {
+      setNowMinutes(getNowMinutesUK(getNow()));
+    }
+    tick();
+    const id = setInterval(tick, 30_000);
+    return () => clearInterval(id);
+  }, []);
 
   const filters: Filters = {
     search,
@@ -292,8 +304,6 @@ function LineupViewInner({ phase, lineup }: Props) {
     return { kind: "none" };
   })();
 
-  const nowMinutes = isFestivalDay ? getNowMinutesUK(getNow()) : null;
-
   function handleBannerSelect(t: {
     site: SiteKey;
     itemId: string;
@@ -331,9 +341,7 @@ function LineupViewInner({ phase, lineup }: Props) {
           savedActive={urlSavedActive}
           onSavedToggle={() => setSavedParam(!urlSavedActive)}
         />
-        {isFestivalDay && (
-          <OnNowBanner items={lineup} onSelect={handleBannerSelect} />
-        )}
+        <OnNowBanner items={lineup} onSelect={handleBannerSelect} />
       </section>
 
       <section className="min-w-0 rounded-3xl bg-cream shadow-card">

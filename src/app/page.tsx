@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import Image from "next/image";
 import type { Metadata } from "next";
-import { getCurrentPhase } from "@/lib/festival/phase";
 import { getLineup } from "@/lib/festival/lineup-data";
 import { SkipLink } from "@/components/shared/SkipLink";
 import { SiteNav } from "@/components/marketing/SiteNav";
@@ -14,7 +13,6 @@ export const metadata: Metadata = {
 };
 
 export default function LineupPage() {
-  const phase = getCurrentPhase();
   const lineup = getLineup();
 
   return (
@@ -71,7 +69,7 @@ export default function LineupPage() {
           </ul>
 
           <Suspense fallback={null}>
-            <LineupView phase={phase} lineup={lineup} />
+            <LineupView lineup={lineup} />
           </Suspense>
         </div>
       </main>
