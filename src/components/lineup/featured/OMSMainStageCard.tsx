@@ -24,7 +24,7 @@ const ACTS: SubItem[] = [
   { id: "oms-ms-03", startTime: "12:45", endTime: "13:30", title: "Step N Groove Workshop", category: "workshops" },
   { id: "oms-ms-04", startTime: "13:30", endTime: "14:45", title: "Shekayla (DJ)", category: "music" },
   { id: "oms-ms-05", startTime: "14:45", endTime: "16:00", title: "Suga Lion (DJ)", category: "music" },
-  { id: "oms-ms-06", startTime: "16:00", endTime: "16:30", title: "Sing It Bold Choir", category: "music" },
+  { id: "oms-ms-06", startTime: "16:00", endTime: "16:30", title: "Mystery Guest", category: "music" },
   { id: "oms-ms-07", startTime: "16:30", endTime: "17:30", title: "Soundhism (DJ)", category: "music" },
   { id: "oms-ms-08", startTime: "17:30", endTime: "18:00", title: "Catwalk", category: "music" },
 ];
