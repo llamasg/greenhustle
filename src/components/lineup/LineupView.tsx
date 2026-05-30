@@ -18,7 +18,6 @@ import {
 } from "@/lib/festival/filters";
 import { LineupControlBar } from "./LineupControlBar";
 import { LineupFeed, type EmptyState } from "./LineupFeed";
-import { OnNowBanner } from "./OnNowBanner";
 import { SavedProvider, useSaved } from "./SavedContext";
 import { OpenCardProvider, useOpenCard } from "./OpenCardContext";
 import type { FeaturedSearch } from "./ContainerCard";
@@ -304,29 +303,10 @@ function LineupViewInner({ lineup }: Props) {
     return { kind: "none" };
   })();
 
-  function handleBannerSelect(t: {
-    site: SiteKey;
-    itemId: string;
-    subItemId?: string;
-  }) {
-    // Clear filters that might hide the target, narrow to its site.
-    setSearch("");
-    const updated = new URLSearchParams(params.toString());
-    updated.delete("category");
-    updated.set("site", t.site);
-    writeParams(updated);
-    setTarget({
-      itemId: t.itemId,
-      subItemId: t.subItemId,
-      nonce: Date.now(),
-    });
-  }
-
   return (
     <div className="flex min-w-0 flex-col gap-4 md:gap-5">
       {/* Control bar pins below the SiteNav so filters stay reachable
-          while the user scrolls the long feed. Includes OnNowBanner so
-          it sticks together on festival day. */}
+          while the user scrolls the long feed. */}
       <section className="sticky top-14 z-30 min-w-0 overflow-hidden rounded-3xl bg-cream shadow-card">
         <LineupControlBar
           search={search}
@@ -341,7 +321,6 @@ function LineupViewInner({ lineup }: Props) {
           savedActive={urlSavedActive}
           onSavedToggle={() => setSavedParam(!urlSavedActive)}
         />
-        <OnNowBanner items={lineup} onSelect={handleBannerSelect} />
       </section>
 
       <section className="min-w-0 rounded-3xl bg-cream shadow-card">
